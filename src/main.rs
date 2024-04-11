@@ -1,5 +1,3 @@
-use pixeldust_wip::LeastBit;
-
 fn main() -> Result<(), Box<dyn std::error::Error>>
 { unimplemented!() }
 
@@ -49,7 +47,7 @@ mod spec {
         
         let steg = LeastBit {};
 
-        let mut experiment: BitVec<u8> = BitVec::from_vec(create_black_jpeg(25, 25));
+        let mut experiment: Vec<u8> = create_black_jpeg(25, 25);
         let before = experiment.clone();
 
         steg.embed(&mut experiment, b"secret!")?;
@@ -61,9 +59,9 @@ mod spec {
     fn extract_lb() -> Result<()> {
         let steg = LeastBit {};
 
-        let mut experiment: BitVec<u8> = BitVec::from_vec(create_black_jpeg(50, 50));
+        let mut experiment: Vec<u8> = create_black_jpeg(50, 50);
         steg.embed(&mut experiment, b"secret!")?;
-        let secret = steg.extract(&experiment, 7)?;
+        let secret = steg.extract(&experiment)?;
         
         assert_eq!(String::from_utf8(secret).unwrap(), "secret!");
         Ok(())

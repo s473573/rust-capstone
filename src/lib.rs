@@ -1,34 +1,73 @@
 mod error;
+use std::io::Read;
+
 use error::CliError;
 
 use bitvec::prelude::*;
 
+// disadvantage of the least bit: relatively small secrets. works with text but what about other media?
+const HEADER_SIZE: usize = 8; // 8 bits of header, all of it is currently used for indicating payload size
+// stores the payload size in BYTES
+
+// change this later to accept a ubiqutous slice of bytes
 pub trait Steganography {
-    fn embed(&self, image_data: &mut BitVec<u8>, secret_data: &[u8]) -> Result<(), CliError>;
-    fn extract(&self, image_data: &BitVec<u8>, secret_length: usize) -> Result<Vec<u8>, CliError>; 
+    fn embed(&self, image_data: &mut Vec<u8>, secret_data: &[u8]) -> Result<(), CliError>;
+    fn extract(&self, image_data: &[u8]) -> Result<Vec<u8>, CliError>; 
 }
 
 pub struct LeastBit {}
+impl LeastBit {
+    // reads last bits using bitwise operations
+    fn read_lsb(src: &[u8]) -> BitVec<u8, Msb0> {
+        let mut bits:BitVec<u8,Msb0> = BitVec::with_capacity(src.len());
+        for &b in src {
+            let lsb = b & 1;
+            bits.push(lsb!=0);
+        }
+        bits
+    }
+    // should accept a vec a slice or anything that represents binary data really
+    fn write_lsb(target: &mut Vec<u8>, secret_bits: BitVec<u8>) {
+        let mut target_bits: BitVec<u8> = BitVec::from_vec(target.clone()); // least bit first bitvec
+        for (i, bit) in secret_bits.iter().enumerate() {
+            let bit_i = i*8; // the first bit to be written is positioned at the tail
+            target_bits.set(bit_i, *bit)
+        }
+
+        *target = target_bits.into_vec()
+    }
+}
 impl Steganography for LeastBit {
-    fn embed(&self, image_data: &mut BitVec<u8>, secret_data: &[u8]) -> Result<(), CliError> {
-        let secret_bits: BitVec<u8> = BitVec::from_slice(secret_data);
+    fn embed(&self, source_data: &mut Vec<u8>, secret_data: &[u8]) -> Result<(), CliError> {
+        let embed_len = secret_data.len() as u8; // LEN is written in BYTES
+        
+        let mut secret_bits = BitVec::<u8>::new();
+
+        // header construction
+        let header = BitVec::<u8, Msb0>::from_element(embed_len);
+        assert_eq!(header.len(), HEADER_SIZE);
+
+        let payload_bits: BitVec<u8, Msb0> = BitVec::from_slice(secret_data);
+
+        secret_bits.extend(header);
+        secret_bits.extend(payload_bits);
+
         // testing the ability to store!
-        if image_data.len() / 8 < secret_bits.len() {
+        if source_data.len() / 8 < secret_bits.len() {
             return Err(CliError::Image("Provided image is too small to store your data.".to_string()));
         }
         
-        for (i, bit) in secret_bits.iter().enumerate() {
-            let bit_i = i * 8;
-            image_data.set(bit_i, *bit);
-        }
+        LeastBit::write_lsb(source_data, secret_bits);
         Ok(())
     }
-    fn extract(&self, image_data: &BitVec<u8>, secret_length: usize) -> Result<Vec<u8>, CliError> {
-        let mut extracted_bits: BitVec<u8> = BitVec::with_capacity(secret_length*8);
-        for i in 0..secret_length*8 {
-            let bit_i = i * 8;
-            extracted_bits.push(image_data[bit_i]);
-        }
-        Ok(extracted_bits.into_vec())
+    fn extract(&self, source_data: &[u8]) -> Result<Vec<u8>, CliError> {
+        let secret_bits = LeastBit::read_lsb(source_data);
+        
+        // written as a u8, read instead as a usize for comfort
+        let payload_len: usize = secret_bits[0..HEADER_SIZE].load();
+        assert!(payload_len > 0);
+        let payload = &secret_bits[HEADER_SIZE..HEADER_SIZE+payload_len*8];
+
+        Ok(payload.to_owned().into_vec())
     }
 }
