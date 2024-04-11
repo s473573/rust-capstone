@@ -1,2 +1,2 @@
-# rust-capstone
-Rustcamp was great. Here lies the last step - a capstone project dealing with the curious phenomenon of steganography.
+# stool
+A [WIP] stenography program to hide your deepest secrets in the most funny memes written in Rust
