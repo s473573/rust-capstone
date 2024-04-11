@@ -19,3 +19,14 @@ impl fmt::Display for CliError {
 }
 
 impl std::error::Error for CliError {}
+
+impl From<std::io::Error> for CliError {
+    fn from(err: std::io::Error) -> Self {
+        CliError::Io(err)
+    }
+}
+impl From<image::ImageError> for CliError {
+    fn from(err: image::ImageError) -> Self {
+        CliError::Image(err.to_string())
+    }
+}

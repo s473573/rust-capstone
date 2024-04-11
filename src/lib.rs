@@ -1,15 +1,12 @@
-mod error;
-use std::io::Read;
-
+use bitvec::prelude::*;
 use error::CliError;
 
-use bitvec::prelude::*;
+mod error;
 
 // disadvantage of the least bit: relatively small secrets. works with text but what about other media?
 const HEADER_SIZE: usize = 8; // 8 bits of header, all of it is currently used for indicating payload size
 // stores the payload size in BYTES
 
-// change this later to accept a ubiqutous slice of bytes
 pub trait Steganography {
     fn embed(&self, image_data: &mut Vec<u8>, secret_data: &[u8]) -> Result<(), CliError>;
     fn extract(&self, image_data: &[u8]) -> Result<Vec<u8>, CliError>; 
@@ -30,7 +27,7 @@ impl LeastBit {
     fn write_lsb(target: &mut Vec<u8>, secret_bits: BitVec<u8>) {
         let mut target_bits: BitVec<u8> = BitVec::from_vec(target.clone()); // least bit first bitvec
         for (i, bit) in secret_bits.iter().enumerate() {
-            let bit_i = i*8; // the first bit to be written is positioned at the tail
+            let bit_i = i*8;
             target_bits.set(bit_i, *bit)
         }
 
