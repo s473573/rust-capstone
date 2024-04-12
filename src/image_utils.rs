@@ -4,7 +4,7 @@ use std::fs::{self, File};
 use image::{GenericImageView, RgbaImage};
 use image::io::Reader as ImageReader;
 
-use crate::error::CliError;
+use stool::error::CliError;
 
 pub fn load_image<P: AsRef<Path>>(path: P) -> Result<Image, CliError> {
     // the image::open() method would open the file by format and fail to load fake-jpgs for leastbit
@@ -29,9 +29,10 @@ pub fn write_image<P: AsRef<Path>>(img: Image, path: P) -> Result<(), CliError> 
         dimensions: (width, height)
     } = img;
 
-    RgbaImage::from_vec(width, height, bytes).unwrap_or_default() // erroring would generate a black image , indicating defeat...
+    RgbaImage::from_vec(width, height, bytes).unwrap_or_default() // would erroring here generate a black image? true defeat...
         .save_with_format(path, image::ImageFormat::Png)
-        .map_err(|err| CliError::Image("Fatal error while writing the image".to_owned())) // later do something useful with it
+        .map_err(CliError::Image)?;
+    Ok(())
 }
 
 // a quick type to contain everything required for the job

@@ -1,10 +1,11 @@
 [package]
-name = "pixeldust-wip"
+name = "stool"
 version = "0.0.1"
 edition = "2021"
 publish = false
 
 [dependencies]
+thiserror = "1.0.58"
 image = "0.24"
 bitvec = "1.0.1"
 anyhow = "1.0.80"
@@ -19,6 +20,7 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 
 [dev-dependencies]
+rand = "*"
 assert_cmd = "*"
 assert_fs = "*"
 predicates = "*"

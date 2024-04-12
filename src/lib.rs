@@ -1,7 +1,7 @@
 use bitvec::prelude::*;
 use error::CliError;
 
-mod error;
+pub mod error;
 
 // disadvantage of the least bit: relatively small secrets. works with text but what about other media?
 const HEADER_SIZE: usize = 8; // 8 bits of header, all of it is currently used for indicating payload size
@@ -51,7 +51,7 @@ impl Steganography for LeastBit {
 
         // testing the ability to store!
         if source_data.len() / 8 < secret_bits.len() {
-            return Err(CliError::Image("Provided image is too small to store your data.".to_string()));
+            return Err(CliError::Misc("Provided image is too small to store your data".to_string()));
         }
         
         LeastBit::write_lsb(source_data, secret_bits);

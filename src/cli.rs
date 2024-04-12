@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use stool::{LeastBit, Steganography};
+use tracing::{info, error};
 use std::{fs::File, io::Write, path::PathBuf};
-use anyhow::Result;
 
 use crate::image_utils;
 
@@ -58,11 +58,11 @@ impl std::str::FromStr for SteganographyMethod {
     }
 }
 
-pub fn main() -> Result<()> {
+pub fn main() -> Result<(), stool::error::CliError> {
     let args = Args::parse();
     match args.mode {
         Mode::Insert { input_file, output_file, message } => {
-            println!("Inserting message '{}' into '{}' and saving as '{}' (method: {:?}, key: {:?})",
+            info!("Inserting message '{}' into '{}' and saving as '{}' (method: {:?}, key: {:?})",
                      message, input_file.display(), output_file.display(), args.method, args.key);
 
             let mut image= image_utils::load_image(input_file)?;
@@ -70,22 +70,20 @@ pub fn main() -> Result<()> {
             steg.embed(&mut image.buffer, message.as_bytes())?;
 
             image_utils::write_image(image, &output_file)
-                .unwrap_or_else(|e| println!("Fatal error while writing the modified image: {:?}", e));
-            Ok(())
         }
         Mode::Extract { input_file } => {
-            println!("Extracting secret from '{}' (method: {:?}, key: {:?})", 
+            info!("Extracting secret from '{}' (method: {:?}, key: {:?})", 
                     input_file.display(), args.method, args.key);
             
             let image = image_utils::load_image(input_file)?;
             let steg = LeastBit{};
             let secret = steg.extract(&image.buffer)?;
             // only print when the secret is text in form
-            println!("{}", String::from_utf8(secret.clone()).unwrap());
+            // println!("{}", String::from_utf8(secret.clone()).unwrap());
             let secret_path= PathBuf::from("secret");
 
-            std::fs::write(&secret_path, &secret)?;
-            println!("Secret recovered successfully.");
+            std::fs::write(secret_path, secret)?;
+            info!("Secret recovered successfully.");
             Ok(())
         }
     }

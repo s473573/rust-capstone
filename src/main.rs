@@ -1,14 +1,33 @@
+use tracing_subscriber::fmt;
+use tracing_subscriber::EnvFilter;
+use tracing::error;
+
 mod cli;
 mod error;
 mod image_utils;
 
 fn main() -> Result<(), ()>{
-    // logging goes here
+    setup_logging();
+
     cli::main().map_err(
         |err| {
-            println!("{}", err);
+            error!("{}", err);
         }
     )
+
+}
+
+fn setup_logging() {
+    let sub = fmt::Subscriber::builder()
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| EnvFilter::from("info"))
+        )
+        .with_writer(std::io::stderr)
+        .finish();
+
+    tracing::subscriber::set_global_default(sub)
+        .expect("Crashed while setting the global default!");
 }
 
 #[cfg(test)]
