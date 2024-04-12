@@ -1,9 +1,12 @@
 use clap::{Parser, Subcommand};
+use image::EncodableLayout;
 use stool::{LeastBit, Steganography};
 use tracing::{info, error};
+use tracing_subscriber::fmt::writer::OrElse;
 use std::{fs::File, io::Write, path::PathBuf};
 
 use crate::image_utils;
+use crate::crypt_utils;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about = "Stool - A Stenography tool for hiding data within files", long_about = None)]
@@ -14,8 +17,9 @@ struct Args {
     #[arg(short = 'm', long, default_value = "least_bit")]
     method: SteganographyMethod,
 
+    /// Apply a password to secure your secret with symmetrical encryption
     #[arg(short, long)]
-    key: Option<String>,
+    password: Option<String>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -40,9 +44,12 @@ enum Mode {
 
 #[derive(Debug, Clone, PartialEq)]
 enum SteganographyMethod {
+    // Embeds a secret by altering the frequency components of a JPEG image, very imperceptible
     DCTC,
+    // Hides data withing the least significant bits of pixel values
     LeastBit,
-    AmendZip,
+    /// Annexes a file to the end of the image, barely a steganography but still useful for hiding archives
+    AttachZip,
 }
 
 impl std::str::FromStr for SteganographyMethod {
@@ -52,7 +59,7 @@ impl std::str::FromStr for SteganographyMethod {
         match s.to_lowercase().as_str() {
             "dctc" => Ok(SteganographyMethod::DCTC),
             "least_bit" => Ok(SteganographyMethod::LeastBit),
-            "amend_zip" => Ok(SteganographyMethod::AmendZip),
+            "amend_zip" => Ok(SteganographyMethod::AttachZip),
             _ => Err(format!("Invalid steganography method: {}", s)),
         }
     }
@@ -63,21 +70,36 @@ pub fn main() -> Result<(), stool::error::CliError> {
     match args.mode {
         Mode::Insert { input_file, output_file, message } => {
             info!("Inserting message '{}' into '{}' and saving as '{}' (method: {:?}, key: {:?})",
-                     message, input_file.display(), output_file.display(), args.method, args.key);
-
+                     message, input_file.display(), output_file.display(), args.method, args.password);
+            
             let mut image= image_utils::load_image(input_file)?;
+            
+            let message_bytes = args.password
+                .as_ref()
+                .map(|p| crypt_utils::encrypt_message(p, &message))
+                .transpose()?
+                .unwrap_or_else(|| message.as_bytes().to_vec());
+            
             let steg = LeastBit{};
-            steg.embed(&mut image.buffer, message.as_bytes())?;
+            steg.embed(&mut image.buffer, &message_bytes)?;
 
             image_utils::write_image(image, &output_file)
         }
         Mode::Extract { input_file } => {
             info!("Extracting secret from '{}' (method: {:?}, key: {:?})", 
-                    input_file.display(), args.method, args.key);
+                    input_file.display(), args.method, args.password);
             
             let image = image_utils::load_image(input_file)?;
             let steg = LeastBit{};
-            let secret = steg.extract(&image.buffer)?;
+
+            let buffer = steg.extract(&image.buffer)?;
+
+            let secret = args.password
+                .as_ref()
+                .map(|p| crypt_utils::decrypt_message(p, &buffer))
+                .transpose()?
+                .unwrap_or(buffer);
+
             // only print when the secret is text in form
             // println!("{}", String::from_utf8(secret.clone()).unwrap());
             let secret_path= PathBuf::from("secret");

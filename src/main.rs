@@ -5,6 +5,7 @@ use tracing::error;
 mod cli;
 mod error;
 mod image_utils;
+mod crypt_utils;
 
 fn main() -> Result<(), ()>{
     setup_logging();
@@ -40,6 +41,8 @@ mod spec {
     use rand::Rng;
     use stool::{LeastBit, Steganography};
     use std::io::Cursor;
+
+    use crate::crypt_utils::{decrypt_message, encrypt_message};
     
     fn create_green_noise_jpeg(width: u32, height: u32) -> Vec<u8> {
         //creates a new image buffer filled with random green values.
@@ -79,6 +82,21 @@ mod spec {
         let mut experiment: Vec<u8> = create_green_noise_jpeg(50, 50);
         steg.embed(&mut experiment, b"secret!")?;
         let secret = steg.extract(&experiment)?;
+        
+        assert_eq!(String::from_utf8(secret).unwrap(), "secret!");
+        Ok(())
+    }
+    
+    #[test]
+    fn test_crypto() -> Result<(), Box<dyn std::error::Error>> {
+        let steg = LeastBit {};
+
+        let mut experiment: Vec<u8> = create_green_noise_jpeg(50, 50);
+
+        let secret = encrypt_message("pass", "secret!")?;
+        steg.embed(&mut experiment, &secret)?;
+        let secret = steg.extract(&experiment)?;
+        let secret = decrypt_message("pass", &secret)?;
         
         assert_eq!(String::from_utf8(secret).unwrap(), "secret!");
         Ok(())
