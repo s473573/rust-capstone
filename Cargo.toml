@@ -1,23 +1,16 @@
 [package]
 name = "stool"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
 ring = "0.16"
-base64 = "0.22.0"
 thiserror = "1.0.58"
 image = "0.24"
 bitvec = "1.0.1"
 anyhow = "1.0.80"
-lazy_static = "1.4.0"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1.0.115"
 clap = { version = "4.5", features = ["derive", "env"] }
-config = "0.14"
-rayon = "1.10"
-chrono = "0.4.37"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 

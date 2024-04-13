@@ -1,10 +1,10 @@
-use std::io::{Cursor, Read};
-use std::{io::Write, path::Path};
-use std::fs::{self, File};
-use image::{GenericImageView, RgbaImage};
-use image::io::Reader as ImageReader;
+use crate::error::CliError;
 
-use stool::error::CliError;
+use std::io::Cursor;
+use std::path::Path;
+use std::fs;
+use image::RgbaImage;
+use image::io::Reader as ImageReader;
 
 pub fn load_image<P: AsRef<Path>>(path: P) -> Result<Image, CliError> {
     // the image::open() method would open the file by format and fail to load fake-jpgs for leastbit

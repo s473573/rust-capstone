@@ -1,12 +1,11 @@
-use clap::{Parser, Subcommand};
-use image::EncodableLayout;
-use stool::{LeastBit, Steganography};
-use tracing::{info, error};
-use tracing_subscriber::fmt::writer::OrElse;
-use std::{fs::File, io::Write, path::PathBuf};
+use stool::steg::Steganography;
+use stool::steg::{lsb::LeastBit, SteganographyMethod};
+use stool::util::crypt as crypt_utils;
+use stool::util::image as image_utils;
 
-use crate::image_utils;
-use crate::crypt_utils;
+use tracing::info;
+use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about = "Stool - A Stenography tool for hiding data within files", long_about = None)]
@@ -40,29 +39,6 @@ enum Mode {
         /// The input file containing a secret
         input_file: PathBuf,        
     },
-}
-
-#[derive(Debug, Clone, PartialEq)]
-enum SteganographyMethod {
-    // Embeds a secret by altering the frequency components of a JPEG image, very imperceptible
-    DCTC,
-    // Hides data withing the least significant bits of pixel values
-    LeastBit,
-    /// Annexes a file to the end of the image, barely a steganography but still useful for hiding archives
-    AttachZip,
-}
-
-impl std::str::FromStr for SteganographyMethod {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "dctc" => Ok(SteganographyMethod::DCTC),
-            "least_bit" => Ok(SteganographyMethod::LeastBit),
-            "amend_zip" => Ok(SteganographyMethod::AttachZip),
-            _ => Err(format!("Invalid steganography method: {}", s)),
-        }
-    }
 }
 
 pub fn main() -> Result<(), stool::error::CliError> {

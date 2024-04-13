@@ -3,9 +3,6 @@ use tracing_subscriber::EnvFilter;
 use tracing::error;
 
 mod cli;
-mod error;
-mod image_utils;
-mod crypt_utils;
 
 fn main() -> Result<(), ()>{
     setup_logging();
@@ -33,16 +30,16 @@ fn setup_logging() {
 
 #[cfg(test)]
 mod spec {
+    use stool::steg::{lsb::*, Steganography};    
+    use stool::util::crypt::{decrypt_message, encrypt_message};
+
     use anyhow::Result;
+    use image::{DynamicImage, ImageBuffer};
+
     use assert_cmd::Command;
     use assert_fs::prelude::*;
-    use image::{DynamicImage, ImageBuffer};
-    
     use rand::Rng;
-    use stool::{LeastBit, Steganography};
     use std::io::Cursor;
-
-    use crate::crypt_utils::{decrypt_message, encrypt_message};
     
     fn create_green_noise_jpeg(width: u32, height: u32) -> Vec<u8> {
         //creates a new image buffer filled with random green values.

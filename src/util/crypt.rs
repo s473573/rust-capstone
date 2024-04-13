@@ -1,5 +1,6 @@
+use crate::error::CliError;
+
 use ring::{aead, digest::{Context, SHA256}, rand::{SecureRandom, SystemRandom}};
-use stool::error::CliError;
 use tracing::debug;
 
 fn construct_key(password: &str) -> aead::LessSafeKey {
