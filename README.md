@@ -14,23 +14,23 @@ Built in Rust to provide you that sweet performance and safety.
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/yourusername/stool.git
+   git clone https://github.com/s473573/rust-capstone.git
    ```
 
 2. **Navigate to the Project Directory:**
    ```bash
-   cd stool
+   cd rust-capstone
    ```
 
 3. **Compile the Project:**
-  ```bash
-  cargo build --release
-  ```
+   ```bash
+   cargo build --release
+   ```
 
 3. **Run it!:**
-  ```bash
-  cargo run -- -k "mypass" insert image.png output.png "literally a secret"
-  ```
+   ```bash
+   cargo run -- -k "mypass" insert image.png output.png "literally a secret"
+   ```
 ## Upcoming Features
 - Additional image steganography methods: like that clever one which uses JPEG pixel block representation
 - Different steganography formats: making possible to hide data inside other general data!
