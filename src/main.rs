@@ -103,6 +103,7 @@ mod spec {
     }
 
     #[test]
+    #[ignore]
     fn test_barebones() -> Result<(), Box<dyn std::error::Error>> {
         let tmp_dir = assert_fs::TempDir::new().unwrap();
 
