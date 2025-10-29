@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use anyhow::Result;
 use tracing::error;
 use tracing_subscriber::fmt;
