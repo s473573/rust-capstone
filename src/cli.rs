@@ -3,9 +3,9 @@ use stool::steg::{lsb::LeastBit, SteganographyMethod};
 use stool::util::crypt as crypt_utils;
 use stool::util::image as image_utils;
 
-use tracing::info;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+use tracing::info;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about = "Stool - A Stenography tool for hiding data within files", long_about = None)]
@@ -37,7 +37,7 @@ enum Mode {
     /// Extracts a secret from a file, not always a meaningful one
     Extract {
         /// The input file containing a secret
-        input_file: PathBuf,        
+        input_file: PathBuf,
 
         /// Optional file to write recovered secret bytes to.
         /// If omitted, the secret is printed to stdout.
@@ -49,33 +49,50 @@ enum Mode {
 pub fn main() -> Result<(), stool::error::CliError> {
     let args = Args::parse();
     match args.mode {
-        Mode::Insert { input_file, output_file, message } => {
-            info!("Inserting secret into '{}' and saving as '{}' (method: {:?})",
-                     input_file.display(), output_file.display(), args.method);
-            
-            let mut image= image_utils::load_image(input_file)?;
-            
-            let message_bytes = args.password
+        Mode::Insert {
+            input_file,
+            output_file,
+            message,
+        } => {
+            info!(
+                "Inserting secret into '{}' and saving as '{}' (method: {:?})",
+                input_file.display(),
+                output_file.display(),
+                args.method
+            );
+
+            let mut image = image_utils::load_image(input_file)?;
+
+            let message_bytes = args
+                .password
                 .as_ref()
                 .map(|p| crypt_utils::encrypt_message(p, &message))
                 .transpose()?
                 .unwrap_or_else(|| message.as_bytes().to_vec());
-            
-            let steg = LeastBit{};
+
+            let steg = LeastBit {};
             steg.embed(&mut image.buffer, &message_bytes)?;
 
             image_utils::write_image(image, &output_file)
         }
-        Mode::Extract { input_file, output_file } => {
-            info!("Extracting secret from '{}' (method: {:?}, key: {:?})", 
-                    input_file.display(), args.method, args.password);
-            
+        Mode::Extract {
+            input_file,
+            output_file,
+        } => {
+            info!(
+                "Extracting secret from '{}' (method: {:?}, key: {:?})",
+                input_file.display(),
+                args.method,
+                args.password
+            );
+
             let image = image_utils::load_image(input_file)?;
-            let steg = LeastBit{};
+            let steg = LeastBit {};
 
             let buffer = steg.extract(&image.buffer)?;
 
-            let secret = args.password
+            let secret = args
+                .password
                 .as_ref()
                 .map(|p| crypt_utils::decrypt_message(p, &buffer))
                 .transpose()?

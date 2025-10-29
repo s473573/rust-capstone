@@ -1,6 +1,10 @@
 use crate::error::CliError;
 
-use ring::{aead, digest::{Context, SHA256}, rand::{SecureRandom, SystemRandom}};
+use ring::{
+    aead,
+    digest::{Context, SHA256},
+    rand::{SecureRandom, SystemRandom},
+};
 use tracing::debug;
 
 fn construct_key(password: &str) -> aead::LessSafeKey {
@@ -9,10 +13,8 @@ fn construct_key(password: &str) -> aead::LessSafeKey {
     context.update(password);
     let key_data = context.finish();
 
-    let unbound_key = aead::UnboundKey::new(
-        &aead::CHACHA20_POLY1305,
-        key_data.as_ref()
-    ).expect("Critical failure during passphrase-key conversion.");
+    let unbound_key = aead::UnboundKey::new(&aead::CHACHA20_POLY1305, key_data.as_ref())
+        .expect("Critical failure during passphrase-key conversion.");
     aead::LessSafeKey::new(unbound_key)
 }
 
@@ -32,10 +34,11 @@ fn encrypt(key: &aead::LessSafeKey, message: &str) -> Result<Vec<u8>, CliError> 
 }
 
 fn decrypt(key: &aead::LessSafeKey, message_data: &Vec<u8>) -> Result<Vec<u8>, CliError> {
-    if message_data.len() < 12 { // can't be less the nonce size!
+    if message_data.len() < 12 {
+        // can't be less the nonce size!
         return Err(ring::error::Unspecified.into());
     }
-    
+
     let mut nonce = [0u8; 12];
     nonce.copy_from_slice(&message_data[0..12]);
     let nonce = aead::Nonce::assume_unique_for_key(nonce);
@@ -56,6 +59,6 @@ pub fn encrypt_message(password: &str, message: &str) -> Result<Vec<u8>, CliErro
 }
 pub fn decrypt_message(password: &str, ciphertext: &Vec<u8>) -> Result<Vec<u8>, CliError> {
     let key = construct_key(password);
-    
+
     decrypt(&key, ciphertext)
 }

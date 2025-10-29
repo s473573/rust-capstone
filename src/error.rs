@@ -12,5 +12,7 @@ pub enum CliError {
 
 // something about this error type structure is preventing me from using the macro
 impl From<ring::error::Unspecified> for CliError {
-    fn from(_: ring::error::Unspecified) -> Self { CliError::Crypto }
+    fn from(_: ring::error::Unspecified) -> Self {
+        CliError::Crypto
+    }
 }
