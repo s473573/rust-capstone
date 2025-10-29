@@ -1,3 +1,4 @@
+#![allow(clippy::ptr_arg)]
 use crate::error::CliError;
 
 use ring::{

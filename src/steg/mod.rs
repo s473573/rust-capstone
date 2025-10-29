@@ -16,7 +16,7 @@ pub trait Steganography {
     /// # Returns
     ///
     /// * `Result<(), CliError>`: Returns a quiet `Ok(())` on success, or throws a `CliError`
-    ///    indicating the type of failure.
+    ///   indicating the type of failure.
     fn embed(&self, image_data: &mut Vec<u8>, secret_data: &[u8]) -> Result<(), CliError>;
 
     /// Tries to extract the hidden data from an image data vector.
@@ -28,7 +28,7 @@ pub trait Steganography {
     /// # Returns
     ///
     /// * `Result<Vec<u8>, CliError>`:  Returns a vector of bytes representing the extracted steganography
-    ///     data on success, or a `CliError` indicating the type of failure.
+    ///   data on success, or a `CliError` indicating the type of failure.
     fn extract(&self, image_data: &[u8]) -> Result<Vec<u8>, CliError>;
 }
 
