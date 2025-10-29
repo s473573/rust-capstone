@@ -38,6 +38,11 @@ enum Mode {
     Extract {
         /// The input file containing a secret
         input_file: PathBuf,        
+
+        /// Optional file to write recovered secret bytes to.
+        /// If omitted, the secret is printed to stdout.
+        #[arg(short = 'o', long = "out")]
+        output_file: Option<PathBuf>,
     },
 }
 
@@ -45,8 +50,8 @@ pub fn main() -> Result<(), stool::error::CliError> {
     let args = Args::parse();
     match args.mode {
         Mode::Insert { input_file, output_file, message } => {
-            info!("Inserting message '{}' into '{}' and saving as '{}' (method: {:?}, key: {:?})",
-                     message, input_file.display(), output_file.display(), args.method, args.password);
+            info!("Inserting secret into '{}' and saving as '{}' (method: {:?})",
+                     input_file.display(), output_file.display(), args.method);
             
             let mut image= image_utils::load_image(input_file)?;
             
@@ -61,7 +66,7 @@ pub fn main() -> Result<(), stool::error::CliError> {
 
             image_utils::write_image(image, &output_file)
         }
-        Mode::Extract { input_file } => {
+        Mode::Extract { input_file, output_file } => {
             info!("Extracting secret from '{}' (method: {:?}, key: {:?})", 
                     input_file.display(), args.method, args.password);
             
@@ -76,12 +81,22 @@ pub fn main() -> Result<(), stool::error::CliError> {
                 .transpose()?
                 .unwrap_or(buffer);
 
-            // only print when the secret is text in form
-            // println!("{}", String::from_utf8(secret.clone()).unwrap());
-            let secret_path= PathBuf::from("secret");
+            if let Some(path) = output_file {
+                std::fs::write(&path, &secret)?;
+                info!("Secret recovered and written to {}", path.display());
+            } else {
+                // first try to show in human-readable form
+                if let Ok(as_utf8) = String::from_utf8(secret.clone()) {
+                    println!("{as_utf8}");
+                } else {
+                    // fallback: output base64 code
+                    use base64::{engine::general_purpose, Engine as _};
+                    let b64 = general_purpose::STANDARD.encode(&secret);
+                    println!("{b64}");
+                }
+                info!("Secret recovered successfully, printed to stdout.");
+            }
 
-            std::fs::write(secret_path, secret)?;
-            info!("Secret recovered successfully.");
             Ok(())
         }
     }
