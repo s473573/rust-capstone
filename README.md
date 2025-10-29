@@ -1,4 +1,5 @@
 <img src="https://github.com/s473573/rust-capstone/assets/115479231/ecc3eba2-abb0-41a8-aa5c-ed8d89a368a2" width="100" alt="">
+
 # stool: Steganography Tool 🎭
 _A tiny Rust stego + crypto CLI for hiding encrypted data inside images._
 
